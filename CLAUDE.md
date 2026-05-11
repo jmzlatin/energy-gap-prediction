@@ -19,10 +19,11 @@ Read `SPEC.md` for the full specification. Read `meeting prep/kickoff_meeting_pr
 - `Data/sp500_Energy_dataset.csv` — base dataset (4 years OHLCV + VIX + S&P)
 - `Instructions/Final Project Guidelines.pdf` — full project rules
 - `Instructions/Stage 1.pdf` — Stage 1 requirements
-- `notebooks/energy_prediction.ipynb` — main project notebook (to be created)
-- `paper/final_paper.md` — written sections, compiled to PDF at the end
+- `notebooks/energy_prediction.ipynb` — main project notebook (Stages 1 + 2 done, Stage 3 next)
+- `paper/final_paper.md` — written sections, compiled to PDF at the end (Stages 1 + 2 drafted)
 - `presentation/final_deck.pptx` — final presentation, built late
 - `meeting prep/` — meeting notes and prep docs
+- `.claude/skills/shoot/SKILL.md` — `/shoot` command definition (see "Shipping a task" below)
 
 ## Tech stack
 
@@ -39,9 +40,9 @@ Read `SPEC.md` for the full specification. Read `meeting prep/kickoff_meeting_pr
 
 The project follows the data science cycle. Each stage produces both notebook code and a written paper section.
 
-1. **Stage 1 — Data Collection & Preparation** (deadline May 21, 2026)
-2. **Stage 2 — Exploratory Data Analysis** (Stages 2–3 combined: 3–4 weeks)
-3. **Stage 3 — Data Engineering & Feature Creation** (iterative with Stage 2)
+1. **Stage 1 — Data Collection & Preparation** (deadline May 21, 2026) — ✅ **done** (Tasks 1.1–1.5 merged; submission tag pending)
+2. **Stage 2 — Exploratory Data Analysis** (Stages 2–3 combined: 3–4 weeks) — ✅ **done** (Tasks 2.1–2.7 merged)
+3. **Stage 3 — Data Engineering & Feature Creation** (iterative with Stage 2) — ⏭ next
 4. **Stage 4 — Modeling, Evaluation & 10-minute presentation** (includes compiling the final paper and presenting)
 
 ## Non-negotiable rules — do not violate these
@@ -50,9 +51,15 @@ The project follows the data science cycle. Each stage produces both notebook co
 - **No look-ahead bias.** Every feature must use only data available **by 4 PM on the prediction date**. When joining external data (OPEC events, EIA reports, etc.), verify date alignment manually — easy to silently leak future info here.
 - **AI usage must be documented** in the final submission per the course AI policy.
 
-## Evaluation metric — open decision
+## Evaluation metric — Stage 2 recommendation
 
-The professor explicitly left this open: **accuracy or returns-based** are both acceptable. Discuss with the group based on the actual class balance after Stage 1. Accuracy can be misleading when classes are heavily imbalanced — if positive class is <20%, prefer precision/recall/F1/ROC-AUC or a returns-based metric (simulated P&L of taking long positions when the model predicts 1). Document the rationale either way.
+The professor left this open between **accuracy or returns-based**. After Stage 2 we recommend (notebook Task 2.2, paper §2):
+
+- **Primary:** **returns-based** — simulated long-only P&L from taking a one-day position whenever the model predicts 1, summed across the roll-forward expanding-window walk-forward. Aligns with the business question and is robust to the 70.75% constant-zero baseline that makes raw accuracy uninformative.
+- **Secondary diagnostics:** **F1**, **precision**, **recall**, **ROC-AUC**.
+- **Avoid as primary:** **raw accuracy**. The 29.25% positive class on `df_model` puts the constant-zero baseline at 70.75% accuracy, making marginal improvements hard to communicate honestly.
+
+The final call still belongs to the team + professor at Stage 4. Don't relitigate before then unless new evidence appears.
 
 ## Energy sector context
 
@@ -100,7 +107,8 @@ If you have uncommitted work when you run `/shoot`, Claude will stop and ask you
 
 - The **1% threshold is confirmed** — don't relitigate it. The task is to model accurately given that target.
 - The market is **efficient**. Beating it with public data is genuinely hard. Modest results are fine; honest interpretation matters more than impressive metrics. External data is the main lever.
-- Class imbalance is the **default expectation**, not a surprise. Check it in Stage 1 and use it to inform the evaluation-metric decision.
+- Class imbalance is the **default expectation**, not a surprise. Stage 2 confirmed `df_model` is 29.25% positive with smooth regime drift across years (17.30% → 43.53% on a 60-day rolling window).
+- **Volatility regime is the dominant base-feature lever** — Stage 2 showed VIX is the only base feature with meaningful signal to the target (`r = +0.130`, Cohen's *d* = +0.28; positive-class rate climbs 21.8% → 42.5% across VIX deciles). Every other base feature sits at `|d| < 0.025`. Stage 3 feature engineering should prioritize volatility-regime and market-context features; external commodity/macro data is still the main lever for breaking past the near-zero base-feature ceiling.
 - Code review will be **minimal** per the professor — focus on thinking and methodology, not code aesthetics.
 
 ## When in doubt
