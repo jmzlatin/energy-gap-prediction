@@ -11,7 +11,7 @@ We predict whether an S&P 500 **Energy sector** stock will rise more than a chos
 ### 1. Clone the repo
 ```bash
 git clone <repo-url>
-cd "Final Project"
+cd energy-gap-prediction
 ```
 
 ### 2. Set up your environment
@@ -32,7 +32,7 @@ jupyter notebook notebooks/energy_prediction.ipynb
 ## Repository layout
 
 ```
-Final Project/
+energy-gap-prediction/
 ├── SPEC.md                          # full project specification — read first
 ├── CLAUDE.md                        # context for AI assistants
 ├── README.md                        # this file
@@ -49,8 +49,10 @@ Final Project/
 │   └── energy_prediction.ipynb      # main project notebook
 ├── paper/
 │   └── final_paper.md               # written sections, compiled to PDF
-└── presentation/
-    └── final_deck.pptx              # final presentation
+├── presentation/
+│   └── final_deck.pptx              # final presentation
+└── tasks/
+    └── STAGE_1.md                   # concrete work breakdown per stage
 ```
 
 ---

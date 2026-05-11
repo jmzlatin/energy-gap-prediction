@@ -2,8 +2,9 @@
 
 **Course:** Fintech Workshop (3055) — Reichman University, Semester 2, 2026
 **Sector:** Energy
+**Threshold:** 1% next-day return (confirmed with professor)
 **Team size:** 4 students
-**Final submission:** Final workshop of the semester
+**Final submission:** Final workshop of the semester, with a **10-minute presentation**
 
 ---
 
@@ -28,10 +29,11 @@ All eleven groups solve the same question on different sectors. Our project is j
 ## 2. Requirements
 
 ### 2.1 Functional requirements
-- Predict, for each (ticker, date) pair, whether next-day return > threshold.
+- Predict, for each (ticker, date) pair, whether next-day return > 1% threshold.
+- Prediction is made at **4 PM market close** each day, using only data available by that time.
 - Train two models: **LightGBM** (primary) and **Logistic Regression** (baseline).
-- Use **walk-forward evaluation**, not random split.
-- Report average evaluation metrics across all walk-forward steps.
+- Use **roll-forward (expanding window) evaluation**, not random split. Train on days 1–50 to predict day 51, then train on days 1–51 to predict day 52, and so on.
+- Report average evaluation metrics across all roll-forward steps.
 - Identify and justify top features for the Energy sector.
 
 ### 2.2 Non-functional requirements
@@ -40,9 +42,9 @@ All eleven groups solve the same question on different sectors. Our project is j
 - Code lives in a single Jupyter notebook covering all stages.
 
 ### 2.3 Constraints (non-negotiable rules)
-- **No random `train_test_split`** — time series only, use walk-forward.
-- **No look-ahead bias** — every feature uses only data available at prediction time.
-- 4 years of data, no more, no less, from the supplied Polygon.io dataset.
+- **No random `train_test_split`** — time series only, use roll-forward expanding-window.
+- **No look-ahead bias** — every feature uses only data available **by 4 PM on the prediction date**. When joining external data, verify date alignment manually.
+- 4 years of data from the supplied Polygon.io dataset, **current through March 6, 2026**.
 - VIX and S&P 500 returns come from yfinance as specified.
 
 ---
@@ -51,50 +53,54 @@ All eleven groups solve the same question on different sectors. Our project is j
 
 ### 3.1 Base dataset
 - **File:** `Data/sp500_Energy_dataset.csv`
-- **Source:** Polygon.io (daily OHLCV) + yfinance (VIX, S&P 500)
-- **Coverage:** ~4 years of daily data, all S&P 500 Energy tickers
+- **Source:** Polygon.io (daily OHLCV, purchased) + yfinance (VIX, S&P 500)
+- **Coverage:** 4 years of daily data, all S&P 500 Energy tickers, **through March 6, 2026**
 - **Columns:** `date, ticker, sector, open, high, low, close, volume, daily_return_pct, 1_d_return, vix_end_of_day, sp500_return_today`
 
 ### 3.2 Engineered features (candidate list)
 Derived from the base data — implementation in Stage 3.
 
-- Moving averages (5, 10, 20, 50 day)
+- Moving averages (5, 10, 20, 50, **150** day — 150-day MA is a common Energy strategy)
 - Distance from moving average
+- Differences between MAs across time horizons (e.g. 20-day vs 50-day spread)
 - Rolling volatility (5, 10, 20 day)
-- RSI (14-day standard)
+- RSI across multiple time periods (not just 14-day)
 - Return windows (1, 3, 5, 10 day returns)
-- Volume ratios (today vs N-day average)
+- Volume changes and volume ratios (today vs N-day average)
 - Lagged returns and lagged volume
 - VIX-relative measures
 
 ### 3.3 External Energy-sector data (planned)
+**External data is critical** — the professor explicitly noted that the base data alone is insufficient to beat the market due to efficiency. Strong external features are the main differentiator across groups.
+
 Each source to be tested for availability, coverage, and frequency before Stage 3.
 
-- WTI crude oil (`CL=F` via yfinance)
-- Brent crude oil (`BZ=F` via yfinance)
-- Natural gas (`NG=F` via yfinance)
-- US Dollar Index — DXY (`DX-Y.NYB`)
-- EIA weekly petroleum inventory reports
-- Baker Hughes rig counts
-- OPEC announcements (event-based)
+- **Natural gas prices** — `NG=F` via yfinance
+- **Oil prices** — both WTI (`CL=F`) and Brent (`BZ=F`). Professor flagged that oil pricing is **location-specific**; consider whether WTI or Brent is more relevant per ticker (US producers vs international exposure).
+- **US Dollar Index (DXY)** — `DX-Y.NYB`. Oil is priced in USD; strong dollar pressures oil.
+- **OPEC announcements** — event-based, requires sourcing a historical event list.
+- EIA weekly petroleum inventory reports.
+- Baker Hughes rig counts.
+- **News sentiment (stretch goal)** — possible but expensive: ~220 trading days/year × 4 years ≈ 880 days of bullish/bearish news per ticker. Only attempt if a clean historical sentiment source is found.
 
 ### 3.4 Target variable
-Binary label: `1` if next-day return exceeds threshold, else `0`.
+Binary label: `1` if next-day return > 1%, else `0`. **Threshold confirmed with professor at 1%.**
 
-- **Default threshold:** 1%
-- **Energy-specific consideration:** Energy stocks are more volatile than market average; a higher threshold (1.5% or 2%) may be justified. Decision to be made after analyzing return distribution.
+Prediction is made at **4 PM market close**, so the label for day _t_ is determined by the close-to-close return from day _t_ to day _t+1_.
 
 ---
 
-## 4. Methodology — Five Stage Workflow
+## 4. Methodology — Four Stage Workflow
 
-### Stage 1: Business Understanding & Data Collection
-- Define target, describe data, verify integrity (ticker count, date range, missing values)
+Professor confirmed four stages (not five). The presentation is part of Stage 4.
+
+### Stage 1: Data Collection & Preparation (due May 21)
+- Define target, describe data, verify integrity (ticker count, date range through March 6 2026, missing values)
 - List candidate engineered features and external data sources
-- Choose threshold and construct binary label
+- Construct binary label at 1% threshold
 - Report positive-class %
 
-### Stage 2: Exploratory Data Analysis
+### Stage 2: Exploratory Data Analysis (Stage 2–3 combined: 3–4 weeks)
 - Shape, types, basic statistics
 - Target distribution analysis (class imbalance check)
 - Univariate distributions
@@ -102,41 +108,41 @@ Binary label: `1` if next-day return exceeds threshold, else `0`.
 - Feature-vs-target analysis
 - Identify suspicious features, missing values, outliers
 
-### Stage 3: Preprocessing & Feature Engineering
+### Stage 3: Data Engineering & Feature Creation
 - Implement engineered features from the candidate list
-- Integrate external Energy data
+- Integrate external Energy data (oil, gas, DXY, OPEC, EIA, rigs)
 - Clean data and handle missing values + outliers
 - Iterate with Stage 2 as needed
 
-### Stage 4: Modeling & Evaluation
+### Stage 4: Modeling, Evaluation & Presentation
 - Train LightGBM (primary) and Logistic Regression (baseline)
-- Walk-forward evaluation
-- Report metrics chosen to fit the problem (likely precision, recall, F1, ROC-AUC — not accuracy due to class imbalance)
+- Roll-forward expanding-window evaluation (train on 1–N, predict N+1, expand)
+- Choose evaluation metric: **accuracy or returns-based** — professor left this open. Discuss in group based on class balance.
 - Identify top features and assess whether they make sense for Energy
 - Answer: did we beat the market?
-
-### Stage 5: Compile and Present
-- Merge written sections into final PDF paper
-- Build PowerPoint deck
-- Present in final class
+- Compile final paper + build 10-minute presentation deck
 
 ---
 
 ## 5. Deliverables
 
-- [ ] **Jupyter Notebook (.ipynb)** — full workflow, all five stages
+- [ ] **Jupyter Notebook (.ipynb)** — full workflow, all four stages. Any Jupyter-compatible environment (VS Code, Cursor, Colab, classic Jupyter) is acceptable.
 - [ ] **Final Working Paper (PDF)** — compiled incrementally, ~1–2 pages per stage
-- [ ] **Presentation (PowerPoint)** — story-focused, presented in the final session
+- [ ] **Presentation (PowerPoint or equivalent)** — 10 minutes, story-focused, presented in the final session
+
+**On code review:** Professor said code review will be **minimal** unless results are exceptional or look problematic. The grade rewards thinking, methodology, and the story — not code aesthetics.
 
 ---
 
 ## 6. Repository Structure
 
 ```
-Final Project/
+energy-gap-prediction/
 ├── SPEC.md                          # this file
 ├── CLAUDE.md                        # AI context file
 ├── README.md                        # quick-start for collaborators
+├── requirements.txt                 # Python dependencies
+├── .gitignore
 ├── Data/
 │   └── sp500_Energy_dataset.csv     # base dataset
 ├── Instructions/
@@ -148,8 +154,10 @@ Final Project/
 │   └── energy_prediction.ipynb      # main project notebook
 ├── paper/
 │   └── final_paper.md               # written sections, compiled later to PDF
-└── presentation/
-    └── final_deck.pptx              # presentation, built late
+├── presentation/
+│   └── final_deck.pptx              # presentation, built late
+└── tasks/
+    └── STAGE_N.md                   # concrete work breakdown per stage
 ```
 
 ---
@@ -188,15 +196,13 @@ One member additionally owns the written paper section each stage; this rotates.
 - [ ] Missing values and outliers handled with documented logic
 
 ### Stage 4
-- [ ] Walk-forward evaluation implemented
+- [ ] Roll-forward expanding-window evaluation implemented
 - [ ] Both LightGBM and Logistic Regression trained
-- [ ] Metrics reported across walk-forward steps
+- [ ] Metrics reported across roll-forward steps (accuracy or returns-based)
 - [ ] Top features identified and interpreted for Energy
 - [ ] Beat-the-market analysis included
-
-### Final
-- [ ] Compiled PDF paper
-- [ ] PowerPoint with story narrative
+- [ ] Compiled PDF paper finished
+- [ ] 10-minute PowerPoint deck ready
 - [ ] Notebook runs end-to-end on a clean environment
 - [ ] AI usage documented
 
@@ -214,6 +220,8 @@ One member additionally owns the written paper section each stage; this rotates.
 ## 10. Open Questions
 
 - [ ] Per-ticker prediction vs pooled-across-Energy prediction?
-- [ ] Final threshold value: 1%, 1.5%, or 2%?
+- [ ] Evaluation metric: accuracy or returns-based? (professor left open)
 - [ ] How to align weekly EIA data with daily stock data (forward-fill, last-known-value)?
 - [ ] How to encode event-based features (OPEC announcements) — binary flag, window indicator?
+- [ ] For oil prices, which benchmark per ticker — WTI for US producers, Brent for internationally-exposed names?
+- [ ] News sentiment as a stretch goal — feasible within timeline, or skip?
