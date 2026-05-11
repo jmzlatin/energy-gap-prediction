@@ -88,6 +88,14 @@ Each stage submission includes:
 2. A 1–2 page written section added to `paper/final_paper.md`
 3. All checkpoints from the Acceptance Criteria in `SPEC.md` for that stage
 
+## Shipping a task — use `/shoot`
+
+When you finish a task and have your changes committed on a feature branch, run `/shoot` and Claude will push the branch, open the PR, merge it (as a merge commit, matching the project's existing history), and sync your local `main`. You don't need to know `git push`, `gh pr create`, or `gh pr merge` — just commit your work and `/shoot`.
+
+Preconditions: working tree clean, not on `main`, at least one commit ahead of `main`, `gh auth status` OK. The skill itself (`.claude/skills/shoot/SKILL.md`) handles the rest and asks before doing anything risky.
+
+If you have uncommitted work when you run `/shoot`, Claude will stop and ask you to commit first. The skill never force-pushes, never squashes, and never bypasses CI / required reviews unless you explicitly ask.
+
 ## Important domain reminders
 
 - The **1% threshold is confirmed** — don't relitigate it. The task is to model accurately given that target.
