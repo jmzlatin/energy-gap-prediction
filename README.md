@@ -129,12 +129,12 @@ These come from the course guidelines and apply to every commit:
 
 ## Team
 
-| Name | Email | Stage 1 workstream |
-|---|---|---|
-| Shani | shanilocker@gmail.com | TBD |
-| TBD | TBD | TBD |
-| TBD | TBD | TBD |
-| TBD | TBD | TBD |
+| Name      | Email              | Stage 1 workstream |
+|-----------|--------------------|---|
+| Elimelech | jmzlatin@gmail.com | TBD |
+| Daniel L  | TBD                | TBD |
+| Zach      | TBD                | TBD |
+| Daniel K  | TBD                | TBD |
 
 ---
 

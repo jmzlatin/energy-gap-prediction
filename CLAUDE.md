@@ -12,6 +12,8 @@ Read `SPEC.md` for the full specification. Read `meeting prep/kickoff_meeting_pr
 
 ## Where things live
 
+- `SPEC.md` — formal project specification (what we're building)
+- `tasks/STAGE_N.md` — concrete work breakdown per stage (what to actually do). **Start here if you've been asked to work on a task.**
 - `Data/sp500_Energy_dataset.csv` — base dataset (4 years OHLCV + VIX + S&P)
 - `Instructions/Final Project Guidelines.pdf` — full project rules
 - `Instructions/Stage 1.pdf` — Stage 1 requirements
